@@ -10,7 +10,7 @@ public class btdb_fix {
 	public static String File_values = "Data.values"; // contains values of keys
 	
 	//variables for read and write + commands
-	public static int m=7; //this is changeable depending on the degree of bt the user prefers
+	public static int m=5; //this is changeable depending on the degree of bt the user prefers
 	public static final int length = 3*m-1; //fixed bytes for writing 
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
 	
@@ -20,19 +20,20 @@ public class btdb_fix {
 	public static final int value_StringBytes = 258; //2 bytes length || 256 bytes string value
 	
 	//Data.bt variables
-	public static int bt_recordCount = 0; // counter for # of nodes
+	public static int bt_recordCount = -1; // counter for # of nodes
 	public static int bt_rootLocation = 0; // tracker for root location
 	public static final int bt_recordBytes = 16;
 	
 	/** not sure what the next currentFocus, newfocus are for**/
-	public static int currentFocus = 0;
-	public static int Newfocus = -1;
+	public static int keyArray_index = 0;
+	public static int destArray_index = 0;
 	public static Input read;
 	public static Scanner sc = new Scanner(System.in);
 
 	public static ArrayList<int[]> Records = new ArrayList<int[]>(); //record of all array representation of nodes
 	public static ArrayList<String> Values = new ArrayList<String>(); // record of all values
 	public static int[] keyArray; //array in focus
+	public static int[] dest_Array; //destination array
 	
 	//generalized input Object
 	public static class Input{
@@ -41,14 +42,24 @@ public class btdb_fix {
 		int key;
 		int offset;
 		Input(String inp){
-			value_recordCount++;
-			offset = value_recordCount;
 			String[] explode = inp.split(" ");
 			this.command = explode[0];
-			if(explode.length>1) this.key = Integer.valueOf(explode[1]);
-			if (explode.length>2) this.value = String.join(" ", Arrays.copyOfRange(explode, 2, explode.length));
+			int length = explode.length;
+			if(length>1) this.key=Integer.valueOf(explode[1]);
+			if(this.command.equals("insert")) {
+				if(length>2) this.value = String.join(" ", Arrays.copyOfRange(explode, 2, explode.length));	
+				else this.value="";
+				Values.add(this.value);
+				offset = value_recordCount;
+				value_recordCount++;
+			}
+			if(this.command.equals("update")) {
+				if(length>2) this.value = String.join(" ", Arrays.copyOfRange(explode, 2, explode.length));	
+				else this.value="";
+			}
 		}
 	}
+		
 	
 	public static void main(String[] args) throws IOException{
 		/** dont forget to make a function for error handling **/
@@ -63,9 +74,13 @@ public class btdb_fix {
 			
 			/** figure out universal searchnode**/
 			int ref_index = searchNode(bt_rootLocation,2);
+			System.out.println(keyArray_index);
+			System.out.println(ref_index);
 			switch(read.command) {
 				case CMD_INSERT:
-					insert1(ref_index);
+					insert(ref_index);
+					write();
+					System.out.printf("< %d inserted.\n", read.key);	
 					break;
 				case CMD_UPDATE:
 					update(2);
@@ -81,7 +96,7 @@ public class btdb_fix {
 				default:
 					System.out.println("ERROR: invalid command");
 			}
-			Records.set(currentFocus, keyArray);
+			//Records.set(currentFocus, keyArray);
 			System.out.print(">");
 		}
 		
@@ -90,6 +105,7 @@ public class btdb_fix {
 	public static void btdb_init() {
 		createNew();
 		keyArray = Records.get(bt_rootLocation);
+		keyArray_index = bt_recordCount;
 		System.out.println(">");
 	}
 	
@@ -111,7 +127,7 @@ public class btdb_fix {
 		return false;
 	}
 	
-	public static void insert1(int index) {
+	public static void insert(int index) {
 		if(keyArray[index]==-1) {
 			keyArray[index-1] = -1;
 			keyArray[index] = read.key;
@@ -119,25 +135,35 @@ public class btdb_fix {
 		}
 		else if(keyArray[index]==read.key) System.out.printf("< ERROR: %d already exists. \n", read.key);
 		else {
-			if(keyArray[length-3]!=-1) return; //split 
+			if(keyArray[length-3]!=-1) {
+				split(index);
+				return;
+			}
 			int[] bt = {-1, read.key, read.offset};
-			move(index, bt);
+			move_forward(index, bt, length);
 		}
 	}
 	
-	public static void move(int index, int[] bt) {
-		if(bt[1]==-1) return;
+	public static void move_forward(int index, int[] bt, int last) {
+		if(bt[1]==-1 || index>last) return;
 		else {
-			if(index==length) return; //split
-			else {
-				 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
-				 keyArray[index-1]=bt[0];
-				 keyArray[index]=bt[1];
-				 keyArray[index+1]=bt[2];
-				 move(index+=3, temp);
-			}
+			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
+			 keyArray[index-1]=bt[0];
+			 keyArray[index]=bt[1];
+			 keyArray[index+1]=bt[2];
+			 move_forward(index+=3, temp, last);
 		}
-		
+	}
+	
+	public static void move_reverse(int index, int[] bt, int last) {
+		if(index<last) return;
+		else {
+			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
+			 keyArray[index-1]=bt[0];
+			 keyArray[index]=bt[1];
+			 keyArray[index+1]=bt[2];
+			 move_reverse(index-=3, temp, last);
+		}
 	}
 	
 	public static int findPromote(int index) {
@@ -159,138 +185,51 @@ public class btdb_fix {
 	}
 	
 	
-	public static void split1(int index) {
+	public static void split(int index) {
 		createNew();
-		// not yet done
-	}
-	
-	public static void split(int key, int promote){			
-		//SPLIT CURRENT ARRAY TO 2
-		int[] parent_array = new int[length]; 
-		int[] temp = keyArray; //current focus array		
-		int index = 2;	
-		int promote_value = 0;//offset_value
-		//create new child
-		createNew();
-		keyArray = Records.get(bt_recordCount-1);	//newly created child
-		
-		//update current array and new array
-		for(int i = 2; i < length; i = i+3){ //loop in temp	
-			if (temp[i] == promote){
-				promote_value = temp[i+1];
-				temp[i] = -1;
-				temp[i+1] = -1;
-				temp[i+2] = -1;
-			}
-			else if(temp[i] > promote){
-				keyArray[index] = temp[i];
-				keyArray[index+1] = temp[i+1];
-				//keyArray[index+2] = temp[i+2]; //no need for child reference
-				
-				temp[i] = -1;
-				temp[i+1] = -1;
-				temp[i+2] = -1;
-				index+=3;
-			}
-		}	
-		Newfocus = bt_recordCount-1;  //int Newfocus = bt_recordCount-1; //focus of new child	
-		
-		//PARENT_ARRAY
-		parent_array = Records.get(bt_rootLocation);				
-		if(temp[0] == -1 && keyArray[0] == -1){ //if no parent and root, create new root
-			createNew(); //create new parent/root
-			bt_rootLocation = bt_recordCount-1; //new root location
-			
-			//Assign parent node to children
-			keyArray[0] = bt_rootLocation; 	
-			temp[0] = bt_rootLocation;
-		
-			//update records
-			Records.set(currentFocus, temp);			
-			Records.set(Newfocus, keyArray);
-			
-			parent_array = Records.get(bt_rootLocation);
-			//Assign children to parent
-			parent_array[1] = currentFocus;
-			parent_array[1+3] = Newfocus;
-			Records.set(bt_rootLocation, parent_array);
-		}
-		
-		if(temp[0] != -1){ //already with existing parent			
-			if(parent_array[13] != -1){ //full
-				System.out.print(parent_array[13] + " FULL");
-			}
-			else{ //if not full
-				keyArray[0] = bt_rootLocation;				
-			}	
-		}		
-		//add promoted nodes if not same as key
-		if(key != promote){
-			//insert to root node			
-			promote_to_root(promote, promote_value,parent_array,Newfocus);		
-			Records.set(bt_rootLocation, parent_array);	
-		}
-			
-	}
-	
-	public static void promote_to_root(int key, int offset_value, int[] parent_array, int Newfocus){
-		//keyArray = keyArray[i]
-		for(int i = 2; i < length; i = i+3){
-			int keyTemp = parent_array[i];
-			if(keyTemp == -1){ 							//if empty space
-				parent_array[i] = key; 						//insert key
-				parent_array[i+1] = offset_value; 			//insert offset of value
-				parent_array[i+2] = Newfocus;		//new child offset
-				break;
-			}
-			else{
-				if (key < keyTemp){						
-					for(int j =  length - 6; j >= i; j = j-3){
-						if (parent_array[j] != -1){							
-							parent_array[j+3] = parent_array[j];		//insert key
-							parent_array[j+3+1] = parent_array[j+1];	//insert offset of value
-							parent_array[j+3+2] = parent_array[j+2];	//child offset
-						}
-					}
-					parent_array[i] = key; 						//insert key
-					parent_array[i+1] = offset_value; 		//insert offset of value
-					parent_array[i+2] = Newfocus;	//new child offset
-					break;
-				}					
-			}
-		}		
+		int promote = findPromote(index);
+		int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
+		int[] bt = {-1, read.key, read.offset};
+		if(index<promote) move_forward(index,bt , promote);
+		else if(index>promote) move_reverse(index, bt, promote);
+		dest_Array = Records.get(bt_recordCount);
+		destArray_index = bt_recordCount;
+		read.key = promote_array[1];
+		read.offset = promote_array[2];
+		System.out.println("promote " + read.key);
+		System.out.println(Arrays.toString(keyArray));
+		move_out(promote-1, 1);
+		promote();
 	}
 	
 	
-	public static void insert() throws IOException{	
-		for(int i = 2; i < length; i = i+3){
-			int keyTemp = keyArray[i];
-			if(keyTemp == -1){ 							//if empty space
-				keyArray[i] = read.key; 						//insert key
-				keyArray[i+1] = value_recordCount; 		//insert offset of value
-				keyArray[i+2] = Newfocus;
-				break;
-			}
-			else{
-				if (read.key < keyTemp){						
-					for(int j =  length - 6; j >= i; j = j-3){
-						if (keyArray[j] != -1){							
-							keyArray[j+3] = keyArray[j];		//insert key
-							keyArray[j+3+1] = keyArray[j+1];	//insert offset of value
-							keyArray[j+3+2] = keyArray[j+2];
-						}
-					}
-					keyArray[i] = read.key; 						//insert key
-					keyArray[i+1] = value_recordCount; 		//insert offset of value
-					keyArray[i+2] = Newfocus;
-					break;
-				}					
-			}
+	public static void promote() {
+		if(keyArray[0]==-1) {
+			createNew();
+			bt_rootLocation = bt_recordCount;
+			keyArray[0]= bt_recordCount;
+			dest_Array[0]=bt_recordCount;
+			keyArray = Records.get(bt_recordCount);
+			insert(2);
+			keyArray[1] = keyArray_index;
+			System.out.println(destArray_index);
+			keyArray[4] = destArray_index;
+			keyArray_index = bt_recordCount;
 		}
-		Values.add(read.value);  //add value to value array	
-		write();
-		value_recordCount += 1;			
-		System.out.printf("< %d inserted.\n", read.key);				
+		else {
+			keyArray = Records.get(keyArray[0]);
+			
+		}
+	}
+	
+	public static void move_out(int index,int dest_index) {
+		if(index>length-2) return;
+		else {
+			System.out.println("hdfsk");
+			dest_Array[dest_index]=keyArray[index];
+			keyArray[index] =-1;
+			move_out(index+1, dest_index+1);
+		}
 	}
 	
 	public static void write() throws IOException {		
@@ -319,7 +258,7 @@ public class btdb_fix {
 		values.writeLong(value_recordCount+1); //write/update num of records
 		//loop to update all records
 		values.seek(value_recordBytes + value_recordCount * value_StringBytes); //look which "record" to updated/add new line
-		values.writeShort(read.value.length()); 	//write length of value
+		values.writeShort((read.value).length()); 	//write length of value
 		values.write((read.value).getBytes("UTF8")); 	//write value after converting to bytes
 		values.close();	
 	}	
@@ -331,9 +270,10 @@ public class btdb_fix {
 		}
 		else if(keyArray[index]==read.key) {
 			Values.set(keyArray[index+1], read.value);
+			System.out.println(Values.get(keyArray[index+1]));
 		}
 		else {
-			update(index+=2);
+			update(index+=3);
 		}
 	}
 	
@@ -342,30 +282,40 @@ public class btdb_fix {
 		if(index == length) System.out.println("ERROR: "+ read.key + " does not exist.");
 		else {
 			if(keyArray[index]== read.key) System.out.println(Values.get(keyArray[index+1]));
-			else select(index+-3);
+			else select(index+=3);
 		}
 	}
 	
 	public static int searchNode(int focus, int index) {
-		keyArray = Records.get(focus);
-		int temp_key = keyArray[index];
+		System.out.println(Arrays.toString(keyArray));
 		int temp_child = keyArray[index-1];
+		System.out.println("child "+ temp_child);
+		System.out.println(focus + " " + index);
 		if(index==length) {
-			if(temp_child==-1) return index;
-			else return searchNode(temp_child,2);
+			if(keyArray[index-1]==-1) return index-3;
+			else return searchNode(temp_child, 2);
 		}
 		else {
+			keyArray = Records.get(focus);
+			keyArray_index = focus;
+			int temp_key = keyArray[index];
 			if(temp_key==-1) {
-				if(temp_child==-1) return index;
-				else return searchNode(temp_child,2);
+				if(temp_child==-1) {
+					System.out.println(":skdjs");
+					return index;
+				}
+				else {
+					System.out.println("child");
+					 return searchNode(temp_child,2);
+				}
 			}
 			else if (temp_key==read.key) return index;
 			else if (temp_key< read.key) return searchNode(focus, index+=3);
 			else {
 				if (temp_child==-1) return index;
-				else return searchNode(keyArray[index-1],2);
+				else return searchNode(temp_child,2);
 			}
 		}
 	}
-	
+
 }
