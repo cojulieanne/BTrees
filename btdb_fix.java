@@ -1,6 +1,6 @@
 import java.util.*;
 import java.io.*;
-public class btdb_fix {
+public class Clean {
 	//java -Xmx32M btdb Data.bt Data.values
 	
 	//global variables initialization
@@ -63,9 +63,9 @@ public class btdb_fix {
 	
 	public static void main(String[] args) throws IOException{
 		/** dont forget to make a function for error handling **/
-		
 		File_bt = args[0];
 		File_values = args[1];
+
 		btdb_init();
 		
 		while(sc.hasNext()) {
@@ -96,7 +96,6 @@ public class btdb_fix {
 				default:
 					System.out.println("ERROR: invalid command");
 			}
-			//Records.set(currentFocus, keyArray);
 			System.out.print(">");
 		}
 		
@@ -106,7 +105,7 @@ public class btdb_fix {
 		createNew();
 		keyArray = Records.get(bt_rootLocation);
 		keyArray_index = bt_recordCount;
-		System.out.println(">");
+		System.out.print(">");
 	}
 	
 	// method for adding a new bt array with all elements equal to -1; call this for splitting and promoting
@@ -115,16 +114,6 @@ public class btdb_fix {
 		Arrays.fill(newRecords, new Integer(-1));
 		Records.add(newRecords);
 		bt_recordCount +=1;
-	}
-	
-	public static boolean exist(){
-		for(int i = 2; i < length; i = i+3){
-			int keyTemp = keyArray[i];			
-			if(keyTemp == read.key){
-				return true;			
-			}
-		}
-		return false;
 	}
 	
 	public static void insert(int index) {
@@ -145,6 +134,8 @@ public class btdb_fix {
 	}
 	
 	public static void move_forward(int index, int[] bt, int last) {
+		System.out.println(index +" "+ last);
+		System.out.println(Arrays.toString(keyArray));
 		if(bt[1]==-1 || index>last) return;
 		else {
 			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
@@ -161,7 +152,7 @@ public class btdb_fix {
 			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
 			 keyArray[index-1]=bt[0];
 			 keyArray[index]=bt[1];
-			 keyArray[index+1]=bt[2];
+			 keyArray[index+1]=bt[2]; 	
 			 move_reverse(index-=3, temp, last);
 		}
 	}
@@ -186,18 +177,17 @@ public class btdb_fix {
 	
 	
 	public static void split(int index) {
+		System.out.println("split");
 		createNew();
 		int promote = findPromote(index);
 		int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
 		int[] bt = {-1, read.key, read.offset};
-		if(index<promote) move_forward(index,bt , promote);
+		if(index<=promote) move_forward(index,bt , promote);
 		else if(index>promote) move_reverse(index, bt, promote);
 		dest_Array = Records.get(bt_recordCount);
 		destArray_index = bt_recordCount;
 		read.key = promote_array[1];
 		read.offset = promote_array[2];
-		System.out.println("promote " + read.key);
-		System.out.println(Arrays.toString(keyArray));
 		move_out(promote-1, 1);
 		promote();
 	}
@@ -215,10 +205,6 @@ public class btdb_fix {
 			System.out.println(destArray_index);
 			keyArray[4] = destArray_index;
 			keyArray_index = bt_recordCount;
-		}
-		else {
-			keyArray = Records.get(keyArray[0]);
-			
 		}
 	}
 	
@@ -260,7 +246,7 @@ public class btdb_fix {
 		values.seek(value_recordBytes + value_recordCount * value_StringBytes); //look which "record" to updated/add new line
 		values.writeShort((read.value).length()); 	//write length of value
 		values.write((read.value).getBytes("UTF8")); 	//write value after converting to bytes
-		values.close();	
+		values.close();
 	}	
 	
 	public static void update(int index) {
@@ -287,10 +273,7 @@ public class btdb_fix {
 	}
 	
 	public static int searchNode(int focus, int index) {
-		System.out.println(Arrays.toString(keyArray));
 		int temp_child = keyArray[index-1];
-		System.out.println("child "+ temp_child);
-		System.out.println(focus + " " + index);
 		if(index==length) {
 			if(keyArray[index-1]==-1) return index-3;
 			else return searchNode(temp_child, 2);
@@ -301,11 +284,9 @@ public class btdb_fix {
 			int temp_key = keyArray[index];
 			if(temp_key==-1) {
 				if(temp_child==-1) {
-					System.out.println(":skdjs");
 					return index;
 				}
 				else {
-					System.out.println("child");
 					 return searchNode(temp_child,2);
 				}
 			}
