@@ -248,6 +248,7 @@ public class Clean {
 	
 	public static void root_insert(int index) {
 		if(keyArray[length-3]!=-1) {
+			System.out.println("HERE");
 			if(keyArray[index]<read.key) root_insert(index+=3);
 			else if(index==length) {
 				keyArray[index]=destArray_index;
