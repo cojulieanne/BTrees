@@ -251,7 +251,7 @@ public class Clean {
 			System.out.println("HERE");
 			if(keyArray[index]<read.key) root_insert(index+=3);
 			else if(index==length) {
-				keyArray[index-4]=keyArray_index;
+				keyArray[index-1]=destArrays_index;
 				split(index-3);
 			}
 			else {
