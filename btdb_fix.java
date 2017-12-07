@@ -256,7 +256,6 @@ public class Clean {
 			else if(index==length) {
 				System.out.println("in index-1");
 				System.out.println("Before - " + Arrays.toString(keyArray));
-				right =keyArray[index-1];	
 				keyArray[index-1]=destArray_index;
 				System.out.println("After - " + Arrays.toString(keyArray));
 				split(index-3);
