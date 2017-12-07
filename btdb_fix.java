@@ -174,7 +174,7 @@ public class Clean {
 	public static void move_forward(int index, int[] bt, int last) {
 		System.out.println(index +" "+ last);
 		System.out.println(Arrays.toString(keyArray));
-		if(bt[1]==-1 || index>last) return;
+		if(bt[1]==-1 || index>=last) return;
 		else {
 			 int[] temp = {keyArray[index], keyArray[index+1], keyArray[index+2]};
 			 keyArray[index]=bt[0];
@@ -183,37 +183,7 @@ public class Clean {
 			 move_forward(index+=3, temp, last);
 		}
 	}
-	
-/**	public static void move_reverse(int index, int[] bt, int last) {
-		System.out.println("index");
-		System.out.println(Arrays.toString(keyArray));
-		if(index<last) return;
-		else {
-			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
-			 keyArray[index-1]=bt[0];
-			 keyArray[index]=bt[1];
-			 keyArray[index+1]=bt[2]; 	
-			 move_reverse(index-=3, temp, last);
-		}
-	} **/
-	
-/**	public static int findPromote(int index) {
-		int order = (index+1)/2;
-		if(m%2==1) {
-			int low_mid = (m/2)*3-1;
-			int high_mid = low_mid+3;
-			if(index<low_mid) return low_mid;
-			else if(index<high_mid) return index;
-			else return high_mid;
-		}
-		else {
-			int mid = (m/2)*3-1;
-			int nextmid = mid+3;
-			if(order<mid) return mid;
-			else if (order>nextmid) return nextmid;
-			else return index;
-		}
-	} **/
+
 	public static int[] popForward(int index, int[] bt, int mid) {
 		if(index>mid) return bt;
 		else {
@@ -270,14 +240,24 @@ public class Clean {
 			mid = (m/2+1)*3-1;
 			move_out(mid, 2);
 		}
-		promote();
+		System.out.println(Arrays.toString(keyArray));
+		System.out.println(Arrays.toString(dest_Array));
 		System.out.println("promote " + Arrays.toString(promote_array));
+		promote();
 	}
 	
 	public static void root_insert(int index) {
-		if(index==length) {
-			split(index);
-			return;
+		if(keyArray[length-3]!=-1) {
+			if(keyArray[index]<read.key) root_insert(index+=3);
+			else if(index==length) {
+				keyArray[index]=destArray_index;
+				split(index-3);
+			}
+			else {
+				keyArray[index-1]=destArray_index;
+				split(index);
+			}
+			
 		}
 		else if(keyArray[index]==-1) {
 			keyArray[index] = read.key;
@@ -292,10 +272,6 @@ public class Clean {
 				int[] bt = {read.key, read.offset, destArray_index};
 				move_forward(index, bt, length);
 			}
-			/**}
-			int[] bt = {-1, read.key, read.offset};
-			move_forward(index, bt, length);
-			System.out.printf("< %d inserted.\n", read.key);**/
 		}
 	}
 	
@@ -317,13 +293,14 @@ public class Clean {
 			keyArray_index = keyArray[0];
 			keyArray=Records.get(keyArray[0]);
 			System.out.println("keyArray "+keyArray);
+			System.out.println("dest_index "+ destArray_index);
 			root_insert(2);
 			dest_Array[0]=keyArray_index;
 		}
 	}
 	
 	public static void move_out(int index,int dest_index) {
-		if(index>length-2) return;
+		if(index==length) return;
 		else {
 			System.out.println("hdfsk");
 			dest_Array[dest_index]=keyArray[index];
@@ -348,7 +325,7 @@ public class Clean {
 			for(int x : recordnum){
 				System.out.printf("%d ", x);
 			}
-			System.out.println();
+		System.out.println();
 		}
 		System.out.println();
 		bt.close();
@@ -385,7 +362,4 @@ public class Clean {
 			else select(index+=3);
 		}
 	}
-	
-	
-
 }
