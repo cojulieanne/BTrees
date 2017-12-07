@@ -10,7 +10,7 @@ public class Clean {
 	public static String File_values = "Data.values"; // contains values of keys
 	
 	//variables for read and write + commands
-	public static int m=5; //this is changeable depending on the degree of bt the user prefers
+	public static int m=7; //this is changeable depending on the degree of bt the user prefers
 	public static final int length = 3*m-1; //fixed bytes for writing 
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
 	
@@ -78,8 +78,7 @@ public class Clean {
 			switch(read.command) {
 				case CMD_INSERT:
 					insert(ref_index);
-					write();
-					System.out.printf("< %d inserted.\n", read.key);	
+					write();	
 					break;
 				case CMD_UPDATE:
 					update(2);
@@ -120,6 +119,7 @@ public class Clean {
 			keyArray[index-1] = -1;
 			keyArray[index] = read.key;
 			keyArray[index+1] = read.offset;
+			System.out.printf("< %d inserted.\n", read.key);
 		}
 		else if(keyArray[index]==read.key) System.out.printf("< ERROR: %d already exists. \n", read.key);
 		else {
@@ -130,6 +130,7 @@ public class Clean {
 			}
 			int[] bt = {-1, read.key, read.offset};
 			move_forward(index, bt, length);
+			System.out.printf("< %d inserted.\n", read.key);
 		}
 	}
 	
@@ -190,7 +191,7 @@ public class Clean {
 		if(index==mid) return bt;
 		else {
 			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
-			 keyArray[index-1]=bt[0];
+			 //keyArray[index-1]=bt[0];
 			 keyArray[index]=bt[1];
 			 keyArray[index+1]=bt[2];
 			 return popReverse(index-=3, temp, mid);
@@ -203,7 +204,7 @@ public class Clean {
 		if(m%2==0) mid = (m/2-1)*3-1;
 		else  mid = (m/2)*3-1;
 		if(index<=mid)  return popForward(index, bt, mid); 
-		else if(index==mid) return bt;
+		else if(index==mid+1) return bt;
 		else {
 			if(read.key<keyArray[index]) return popReverse(index-3, bt, mid);
 			else return popReverse(index, bt, mid);
@@ -218,12 +219,20 @@ public class Clean {
 		
 		//if(index<=promote) move_forward(index, bt , promote-3);
 		//else if(index>promote) move_reverse(index-3, bt, promote);
-		//dest_Array = Records.get(bt_recordCount);
-		//destArray_index = bt_recordCount;
-		//read.key = promote_array[1];
-		//read.offset = promote_array[2];
-		//move_out(promote-1, 1);
-		//promote();
+		dest_Array = Records.get(bt_recordCount);
+		destArray_index = bt_recordCount;
+		read.key = promote_array[1];
+		read.offset = promote_array[2];
+		int mid;
+		if(m%2==0) { 
+			mid = (m/2-1)*3-1;
+			move_out(mid+3, 1);
+		}
+		else  {
+			mid = (m/2+1)*3-1;
+			move_out(mid, 1);
+		}
+		promote();
 		System.out.println("promote " + Arrays.toString(promote_array));
 	}
 	
