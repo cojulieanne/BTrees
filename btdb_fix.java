@@ -73,8 +73,7 @@ public class Clean {
 			read = new Input(inp);
 			/** figure out universal searchnode**/
 			int ref_index = searchNode(bt_rootLocation,2);
-			System.out.println(keyArray_index);
-			System.out.println(ref_index);
+			System.out.println("search done");
 			switch(read.command) {
 				case CMD_INSERT:
 					insert(ref_index);
@@ -114,11 +113,50 @@ public class Clean {
 		bt_recordCount +=1;
 	}
 	
+	public static int searchNode(int focus, int index) {
+		System.out.println("focus " + focus + " index "+ index);
+		int temp_leftchild = keyArray[index-1];
+		System.out.println("leftchild" + temp_leftchild);
+		if(index==length) {
+			if(keyArray[index-1]==-1) return index-3;
+			else return searchNode(temp_leftchild, 2);
+		}
+		else {
+			keyArray = Records.get(focus);
+			int temp_rightchild = keyArray[index+2];
+			System.out.println("rightchild" + temp_rightchild);
+			temp_leftchild = keyArray[index-1];
+			System.out.println("leftchild" + temp_leftchild);
+			keyArray_index = focus;
+			int temp_key = keyArray[index];
+			if(temp_key==-1) {
+				if(temp_leftchild==-1) {
+					return index;
+				}
+				else {
+					 return searchNode(temp_leftchild,2);
+				}
+			}
+			else if (temp_key==read.key) return index;
+			else if (temp_key < read.key) {
+				if(temp_rightchild!=-1) return searchNode(temp_rightchild,2);
+				else return searchNode(focus, index+=3);
+			}
+			else {
+				System.out.println(index);
+				System.out.println("nhshbsd");
+				System.out.println(temp_leftchild);
+				if (temp_leftchild==-1) return index;
+				else return searchNode(temp_leftchild,2);
+			}
+		}
+	}
+	
 	public static void insert(int index) {
 		if(keyArray[index]==-1) {
-			keyArray[index-1] = -1;
 			keyArray[index] = read.key;
 			keyArray[index+1] = read.offset;
+			keyArray[index+2] = -1;
 			System.out.printf("< %d inserted.\n", read.key);
 		}
 		else if(keyArray[index]==read.key) System.out.printf("< ERROR: %d already exists. \n", read.key);
@@ -128,7 +166,7 @@ public class Clean {
 				split(index);
 				return;
 			}
-			int[] bt = {-1, read.key, read.offset};
+			int[] bt = {read.key, read.offset, -1};
 			move_forward(index, bt, length);
 			System.out.printf("< %d inserted.\n", read.key);
 		}
@@ -139,10 +177,10 @@ public class Clean {
 		System.out.println(Arrays.toString(keyArray));
 		if(bt[1]==-1 || index>last) return;
 		else {
-			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
-			 keyArray[index-1]=bt[0];
-			 keyArray[index]=bt[1];
-			 keyArray[index+1]=bt[2];
+			 int[] temp = {keyArray[index], keyArray[index+1], keyArray[index+2]};
+			 keyArray[index]=bt[0];
+			 keyArray[index+1]=bt[1];
+			 keyArray[index+2]=bt[2];
 			 move_forward(index+=3, temp, last);
 		}
 	}
@@ -180,20 +218,21 @@ public class Clean {
 	public static int[] popForward(int index, int[] bt, int mid) {
 		if(index>mid) return bt;
 		else {
-			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
-			 keyArray[index-1]=bt[0];
-			 keyArray[index]=bt[1];
-			 keyArray[index+1]=bt[2];
+			 int[] temp = {keyArray[index], keyArray[index+1], keyArray[index+2]};
+			 keyArray[index]=bt[0];
+			 keyArray[index+1]=bt[1];
+			 keyArray[index+2]=bt[2];
 			 return popForward(index+=3, temp, mid);
 		}
 	}
 	public static int[] popReverse(int index, int[] bt, int mid) {
+		System.out.println(Arrays.toString(bt));
 		if(index==mid) return bt;
 		else {
-			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
-			 //keyArray[index-1]=bt[0];
-			 keyArray[index]=bt[1];
-			 keyArray[index+1]=bt[2];
+			 int[] temp = {keyArray[index], keyArray[index+1], keyArray[index+2]};
+			 keyArray[index]=bt[0];
+			 keyArray[index+1]=bt[1];
+			 keyArray[index+2]=bt[2];
 			 return popReverse(index-=3, temp, mid);
 		}
 	}
@@ -213,7 +252,7 @@ public class Clean {
 	
 	public static void split(int index) {
 		createNew();
-		int[] bt = {-1, read.key, read.offset};
+		int[] bt = {read.key, read.offset, -1};
 		int[] promote_array = popPromote(index, bt);
 		//int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
 		
@@ -221,21 +260,45 @@ public class Clean {
 		//else if(index>promote) move_reverse(index-3, bt, promote);
 		dest_Array = Records.get(bt_recordCount);
 		destArray_index = bt_recordCount;
-		read.key = promote_array[1];
-		read.offset = promote_array[2];
+		read.key = promote_array[0];
+		read.offset = promote_array[1];
 		int mid;
 		if(m%2==0) { 
 			mid = (m/2-1)*3-1;
-			move_out(mid+3, 1);
+			move_out(mid+3, 2);
 		}
 		else  {
 			mid = (m/2+1)*3-1;
-			move_out(mid, 1);
+			move_out(mid, 2);
 		}
 		promote();
 		System.out.println("promote " + Arrays.toString(promote_array));
 	}
 	
+	public static void root_insert(int index) {
+		if(index==length) {
+			split(index);
+			return;
+		}
+		else if(keyArray[index]==-1) {
+			keyArray[index] = read.key;
+			keyArray[index-1] = read.offset;
+			keyArray[index+2] = destArray_index;
+			System.out.printf("< %d inserted.\n", read.key);
+		}
+		else {
+			if(keyArray[index]<read.key) root_insert(index+=3);
+			//if(keyArray[length-3]!=-1) {
+			else {
+				int[] bt = {read.key, read.offset, destArray_index};
+				move_forward(index, bt, length);
+			}
+			/**}
+			int[] bt = {-1, read.key, read.offset};
+			move_forward(index, bt, length);
+			System.out.printf("< %d inserted.\n", read.key);**/
+		}
+	}
 	
 	public static void promote() {
 		if(keyArray[0]==-1) {
@@ -249,6 +312,14 @@ public class Clean {
 			System.out.println(destArray_index);
 			keyArray[4] = destArray_index;
 			keyArray_index = bt_recordCount;
+		}
+		else
+		{
+			keyArray_index = keyArray[0];
+			keyArray=Records.get(keyArray[0]);
+			System.out.println("keyArray "+keyArray);
+			root_insert(2);
+			dest_Array[0]=keyArray_index;
 		}
 	}
 	
@@ -316,34 +387,6 @@ public class Clean {
 		}
 	}
 	
-	public static int searchNode(int focus, int index) {
-		int temp_child = keyArray[index-1];
-		if(index==length) {
-			if(keyArray[index-1]==-1) return index-3;
-			else return searchNode(temp_child, 2);
-		}
-		else {
-			keyArray = Records.get(focus);
-			keyArray_index = focus;
-			int temp_key = keyArray[index];
-			if(temp_key==-1) {
-				if(temp_child==-1) {
-					return index;
-				}
-				else {
-					 return searchNode(temp_child,2);
-				}
-			}
-			else if (temp_key==read.key) return index;
-			else if (temp_key< read.key) {
-				return searchNode(focus, index+=3);
-			}
-			else {
-				System.out.println("nhshbsd");
-				if (temp_child==-1) return index;
-				else return searchNode(temp_child,2);
-			}
-		}
-	}
+	
 
 }
