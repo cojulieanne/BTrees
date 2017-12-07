@@ -71,7 +71,6 @@ public class Clean {
 		while(sc.hasNext()) {
 			String inp = sc.nextLine();
 			read = new Input(inp);
-			
 			/** figure out universal searchnode**/
 			int ref_index = searchNode(bt_rootLocation,2);
 			System.out.println(keyArray_index);
@@ -125,6 +124,7 @@ public class Clean {
 		else if(keyArray[index]==read.key) System.out.printf("< ERROR: %d already exists. \n", read.key);
 		else {
 			if(keyArray[length-3]!=-1) {
+				System.out.println("Split");
 				split(index);
 				return;
 			}
@@ -146,7 +146,9 @@ public class Clean {
 		}
 	}
 	
-	public static void move_reverse(int index, int[] bt, int last) {
+/**	public static void move_reverse(int index, int[] bt, int last) {
+		System.out.println("index");
+		System.out.println(Arrays.toString(keyArray));
 		if(index<last) return;
 		else {
 			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
@@ -155,9 +157,9 @@ public class Clean {
 			 keyArray[index+1]=bt[2]; 	
 			 move_reverse(index-=3, temp, last);
 		}
-	}
+	} **/
 	
-	public static int findPromote(int index) {
+/**	public static int findPromote(int index) {
 		int order = (index+1)/2;
 		if(m%2==1) {
 			int low_mid = (m/2)*3-1;
@@ -167,29 +169,62 @@ public class Clean {
 			else return high_mid;
 		}
 		else {
-			int mid = ((m+1)/2)*3-1;
+			int mid = (m/2)*3-1;
 			int nextmid = mid+3;
 			if(order<mid) return mid;
 			else if (order>nextmid) return nextmid;
 			else return index;
 		}
+	} **/
+	public static int[] popForward(int index, int[] bt, int mid) {
+		if(index>mid) return bt;
+		else {
+			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
+			 keyArray[index-1]=bt[0];
+			 keyArray[index]=bt[1];
+			 keyArray[index+1]=bt[2];
+			 return popForward(index+=3, temp, mid);
+		}
+	}
+	public static int[] popReverse(int index, int[] bt, int mid) {
+		if(index==mid) return bt;
+		else {
+			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
+			 keyArray[index-1]=bt[0];
+			 keyArray[index]=bt[1];
+			 keyArray[index+1]=bt[2];
+			 return popReverse(index-=3, temp, mid);
+		}
 	}
 	
+
+	public static int[] popPromote(int index, int[] bt) {
+		int mid;
+		if(m%2==0) mid = (m/2-1)*3-1;
+		else  mid = (m/2)*3-1;
+		if(index<=mid)  return popForward(index, bt, mid); 
+		else if(index==mid) return bt;
+		else {
+			if(read.key<keyArray[index]) return popReverse(index-3, bt, mid);
+			else return popReverse(index, bt, mid);
+		}
+	}
 	
 	public static void split(int index) {
-		System.out.println("split");
 		createNew();
-		int promote = findPromote(index);
-		int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
 		int[] bt = {-1, read.key, read.offset};
-		if(index<=promote) move_forward(index,bt , promote);
-		else if(index>promote) move_reverse(index, bt, promote);
-		dest_Array = Records.get(bt_recordCount);
-		destArray_index = bt_recordCount;
-		read.key = promote_array[1];
-		read.offset = promote_array[2];
-		move_out(promote-1, 1);
-		promote();
+		int[] promote_array = popPromote(index, bt);
+		//int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
+		
+		//if(index<=promote) move_forward(index, bt , promote-3);
+		//else if(index>promote) move_reverse(index-3, bt, promote);
+		//dest_Array = Records.get(bt_recordCount);
+		//destArray_index = bt_recordCount;
+		//read.key = promote_array[1];
+		//read.offset = promote_array[2];
+		//move_out(promote-1, 1);
+		//promote();
+		System.out.println("promote " + Arrays.toString(promote_array));
 	}
 	
 	
@@ -291,8 +326,11 @@ public class Clean {
 				}
 			}
 			else if (temp_key==read.key) return index;
-			else if (temp_key< read.key) return searchNode(focus, index+=3);
+			else if (temp_key< read.key) {
+				return searchNode(focus, index+=3);
+			}
 			else {
+				System.out.println("nhshbsd");
 				if (temp_child==-1) return index;
 				else return searchNode(temp_child,2);
 			}
