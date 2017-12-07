@@ -221,7 +221,7 @@ public class Clean {
 	
 	public static void split(int index) {
 		createNew();
-		int[] bt = {read.key, read.offset, -1};
+		int[] bt = {read.key, read.offset, keyArray[index+2]};
 		int[] promote_array = popPromote(index, bt);
 		//int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
 		
@@ -251,11 +251,12 @@ public class Clean {
 			System.out.println("HERE");
 			if(keyArray[index]<read.key) root_insert(index+=3);
 			else if(index==length) {
-				keyArray[index]=destArray_index;
+				keyArray[index-4]=keyArray_index;
 				split(index-3);
 			}
 			else {
-				keyArray[index-1]=destArray_index;
+				keyArray[index+2]=destArray_index;
+				System.out.println(Arrays.toString(keyArray));
 				split(index);
 			}
 			
@@ -293,7 +294,7 @@ public class Clean {
 		{
 			keyArray_index = keyArray[0];
 			keyArray=Records.get(keyArray[0]);
-			System.out.println("keyArray "+keyArray);
+			System.out.println("keyArray "+keyArray_index);
 			System.out.println("dest_index "+ destArray_index);
 			root_insert(2);
 			dest_Array[0]=keyArray_index;
