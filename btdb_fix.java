@@ -10,7 +10,7 @@ public class Clean {
 	public static String File_values = "Data.values"; // contains values of keys
 	
 	//variables for read and write + commands
-	public static int m=7; //this is changeable depending on the degree of bt the user prefers
+	public static int m=5; //this is changeable depending on the degree of bt the user prefers
 	public static final int length = 3*m-1; //fixed bytes for writing 
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
 	
@@ -139,8 +139,7 @@ public class Clean {
 			}
 			else if (temp_key==read.key) return index;
 			else if (temp_key < read.key) {
-				if(temp_rightchild!=-1) return searchNode(temp_rightchild,2);
-				else return searchNode(focus, index+=3);
+				return searchNode(focus, index+=3);
 			}
 			else {
 				System.out.println(index);
@@ -282,7 +281,7 @@ public class Clean {
 		}
 		else if(keyArray[index]==-1) {
 			keyArray[index] = read.key;
-			keyArray[index-1] = read.offset;
+			keyArray[index+1] = read.offset;
 			keyArray[index+2] = destArray_index;
 			System.out.printf("< %d inserted.\n", read.key);
 		}
