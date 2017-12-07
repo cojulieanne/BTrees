@@ -34,7 +34,7 @@ public class Clean {
 	public static ArrayList<String> Values = new ArrayList<String>(); // record of all values
 	public static int[] keyArray; //array in focus
 	public static int[] dest_Array; //destination array
-	
+	public static int right =-1;
 	//generalized input Object
 	public static class Input{
 		String command;
@@ -74,6 +74,7 @@ public class Clean {
 			/** figure out universal searchnode**/
 			int ref_index = searchNode(bt_rootLocation,2);
 			System.out.println("search done");
+			int right =-1;
 			switch(read.command) {
 				case CMD_INSERT:
 					insert(ref_index);
@@ -188,6 +189,7 @@ public class Clean {
 		if(index>mid) return bt;
 		else {
 			 int[] temp = {keyArray[index], keyArray[index+1], keyArray[index+2]};
+			 //keyArray[index-1]=bt[0-1];
 			 keyArray[index]=bt[0];
 			 keyArray[index+1]=bt[1];
 			 keyArray[index+2]=bt[2];
@@ -224,7 +226,7 @@ public class Clean {
 		int[] bt = {read.key, read.offset, keyArray[index+2]};
 		int[] promote_array = popPromote(index, bt);
 		//int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
-		
+		//System.out.println("bt- " + Arrays.toString(bt));
 		//if(index<=promote) move_forward(index, bt , promote-3);
 		//else if(index>promote) move_reverse(index-3, bt, promote);
 		dest_Array = Records.get(bt_recordCount);
@@ -240,26 +242,37 @@ public class Clean {
 			mid = (m/2+1)*3-1;
 			move_out(mid, 2);
 		}
-		System.out.println(Arrays.toString(keyArray));
-		System.out.println(Arrays.toString(dest_Array));
-		System.out.println("promote " + Arrays.toString(promote_array));
+		dest_Array[1]=right;
+		//for parent of new child? ===current fix
+		dest_Array[0] = keyArray[0];
 		promote();
 	}
 	
 	public static void root_insert(int index) {
+		
 		if(keyArray[length-3]!=-1) {
 			System.out.println("HERE");
 			if(keyArray[index]<read.key) root_insert(index+=3);
 			else if(index==length) {
-				keyArray[index-1]=destArrays_index;
+				System.out.println("in index-1");
+				System.out.println("Before - " + Arrays.toString(keyArray));
+				right =keyArray[index-1];	
+				keyArray[index-1]=destArray_index;
+				System.out.println("After - " + Arrays.toString(keyArray));
 				split(index-3);
 			}
 			else {
+				System.out.println("in index+2");
+				System.out.println("Before - " + Arrays.toString(keyArray));
+				right =keyArray[index+2];
 				keyArray[index+2]=destArray_index;
-				System.out.println(Arrays.toString(keyArray));
+				System.out.println("After - " + Arrays.toString(keyArray));
 				split(index);
 			}
-			
+			System.out.println("current key array " + Arrays.toString(keyArray));
+			System.out.println("destArray_index - " + destArray_index);
+			//System.out.println("dest_index - " + dest_index);
+			update_parents(destArray_index);
 		}
 		else if(keyArray[index]==-1) {
 			keyArray[index] = read.key;
@@ -295,9 +308,26 @@ public class Clean {
 			keyArray_index = keyArray[0];
 			keyArray=Records.get(keyArray[0]);
 			System.out.println("keyArray "+keyArray_index);
-			System.out.println("dest_index "+ destArray_index);
 			root_insert(2);
 			dest_Array[0]=keyArray_index;
+		}
+	}
+	public static void update_parents(int ParentNum){
+		//boolean up = false;
+		System.out.println("update parents");	
+		int[] parentArray = Records.get(ParentNum);
+		System.out.println("Parent - " + Arrays.toString(parentArray));
+		
+		for (int i = 1; i < length; i = i+3){	
+			if(parentArray[i] != -1){				
+				int[] temp_array = Records.get(parentArray[i]); //get records under new parent	
+				temp_array[0]= ParentNum;//Records.get(i)
+				System.out.println("current key array " + Arrays.toString(temp_array));
+				
+				
+				//Records.set(A[i], temp_array);	
+				//up = true;	
+			}
 		}
 	}
 	
